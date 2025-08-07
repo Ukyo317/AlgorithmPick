@@ -1,4 +1,4 @@
-using AlgorithmPick.Middleware.RateLimiting;
+using AlgorithmPick.Middleware.RateLimiting.Core;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 

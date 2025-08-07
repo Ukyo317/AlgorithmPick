@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using AlgorithmPick.Models;
-using AlgorithmPick.Middleware.RateLimiting;
+using AlgorithmPick.Middleware.RateLimiting.Core;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AlgorithmPick.Controllers

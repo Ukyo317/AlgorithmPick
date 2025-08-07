@@ -1,4 +1,4 @@
-namespace AlgorithmPick.Middleware.RateLimiting
+namespace AlgorithmPick.Middleware.RateLimiting.Core
 {
     /// <summary>
     /// 限流算法接口

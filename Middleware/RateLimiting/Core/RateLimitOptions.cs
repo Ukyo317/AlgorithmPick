@@ -1,4 +1,4 @@
-namespace AlgorithmPick.Middleware.RateLimiting
+namespace AlgorithmPick.Middleware.RateLimiting.Core
 {
     /// <summary>
     /// 限流配置选项
@@ -11,14 +11,34 @@ namespace AlgorithmPick.Middleware.RateLimiting
         public RateLimitAlgorithm Algorithm { get; set; } = RateLimitAlgorithm.TokenBucket;
 
         /// <summary>
+        /// 存储类型
+        /// </summary>
+        public StorageType StorageType { get; set; } = StorageType.InMemory;
+
+        /// <summary>
+        /// Redis连接字符串（当StorageType为Redis时使用）
+        /// </summary>
+        public string? RedisConnectionString { get; set; }
+
+        /// <summary>
+        /// Redis键前缀
+        /// </summary>
+        public string RedisKeyPrefix { get; set; } = "rate_limit:";
+
+        /// <summary>
         /// 每秒允许的请求数量
         /// </summary>
         public int RequestsPerSecond { get; set; } = 10;
 
         /// <summary>
-        /// 桶容量（对于令牌桶算法）或队列容量（对于漏桶算法）
+        /// 桶容量（对于令牌桶算法）或队列容量（对于漏桶算法）或窗口内最大请求数（对于窗口算法）
         /// </summary>
         public int Capacity { get; set; } = 20;
+
+        /// <summary>
+        /// 窗口大小（仅对固定窗口和滑动窗口算法有效）
+        /// </summary>
+        public TimeSpan WindowSize { get; set; } = TimeSpan.FromMinutes(1);
 
         /// <summary>
         /// 获取客户端标识的函数
@@ -53,6 +73,29 @@ namespace AlgorithmPick.Middleware.RateLimiting
         /// <summary>
         /// 漏桶算法
         /// </summary>
-        LeakyBucket
+        LeakyBucket,
+        /// <summary>
+        /// 固定窗口计数器算法
+        /// </summary>
+        FixedWindow,
+        /// <summary>
+        /// 滑动窗口算法
+        /// </summary>
+        SlidingWindow
+    }
+
+    /// <summary>
+    /// 存储类型
+    /// </summary>
+    public enum StorageType
+    {
+        /// <summary>
+        /// 内存存储
+        /// </summary>
+        InMemory,
+        /// <summary>
+        /// Redis存储
+        /// </summary>
+        Redis
     }
 }
