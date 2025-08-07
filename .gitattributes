@@ -1,0 +1,75 @@
+# Set default behavior to automatically normalize line endings.
+* text=auto
+
+# C# files
+*.cs text diff=csharp
+
+# ASP.NET files
+*.cshtml text
+*.js text
+*.css text
+*.json text
+*.xml text
+
+# Configuration files
+*.config text
+*.ini text
+*.md text
+*.yml text
+*.yaml text
+
+# Project files
+*.sln text eol=crlf
+*.csproj text
+*.vbproj text
+*.vcxproj text
+*.vcproj text
+*.dbproj text
+*.fsproj text
+*.lsproj text
+*.wixproj text
+*.modelproj text
+*.sqlproj text
+*.wwaproj text
+
+# Properties
+*.props text
+*.targets text
+*.ruleset text
+*.stylecop text
+
+# Dotfiles
+.gitattributes text
+.gitignore text
+.editorconfig text
+
+# Documents
+*.docx diff=astextplain
+*.DOCX diff=astextplain
+*.dot diff=astextplain
+*.DOT diff=astextplain
+*.pdf diff=astextplain
+*.PDF diff=astextplain
+*.rtf diff=astextplain
+*.RTF diff=astextplain
+
+# Graphics
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg text
+
+# Archives
+*.7z binary
+*.gz binary
+*.tar binary
+*.zip binary
+
+# Fonts
+*.ttf binary
+*.eot binary
+*.otf binary
+*.woff binary
+*.woff2 binary
