@@ -1,0 +1,249 @@
+@{
+    ViewData["Title"] = "算法配置与对比";
+}
+
+<div class="container">
+    <h1 class="text-center mb-4">限流算法配置与对比</h1>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>当前配置</h5>
+                </div>
+                <div class="card-body" id="currentConfig">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">加载中...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>算法切换</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">要切换算法，请修改 <code>appsettings.json</code> 中的配置，然后重启应用。</p>
+                    <div class="alert alert-info">
+                        <strong>令牌桶算法:</strong><br>
+                        <code>"Algorithm": "TokenBucket"</code>
+                    </div>
+                    <div class="alert alert-warning">
+                        <strong>漏桶算法:</strong><br>
+                        <code>"Algorithm": "LeakyBucket"</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>算法详细对比</h5>
+                </div>
+                <div class="card-body" id="algorithmComparison">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">加载中...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>算法说明</h5>
+                </div>
+                <div class="card-body" id="algorithmDescriptions">
+                    <div class="text-center">
+                        <div class="spinner-border" role="status">
+                            <span class="visually-hidden">加载中...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>配置示例</h5>
+                </div>
+                <div class="card-body">
+                    <h6>appsettings.json 配置示例：</h6>
+                    <pre><code>{
+  "RateLimit": {
+    "Algorithm": "TokenBucket",     // 或 "LeakyBucket"
+    "RequestsPerSecond": 10,        // 每秒允许的请求数
+    "Capacity": 20,                 // 桶容量
+    "StatusCode": 429,              // 限流时的HTTP状态码
+    "Message": "请求过于频繁，请稍后再试",
+    "IncludeHeaders": true          // 是否包含限流响应头
+  }
+}</code></pre>
+
+                    <h6 class="mt-4">Program.cs 配置示例：</h6>
+                    <pre><code>// 方式1：使用配置文件
+builder.Services.AddRateLimiting(options =>
+{
+    var rateLimitSection = builder.Configuration.GetSection("RateLimit");
+    // 从配置文件读取设置...
+});
+
+// 方式2：直接配置令牌桶
+builder.Services.AddTokenBucketRateLimiting(
+    requestsPerSecond: 10,
+    capacity: 20
+);
+
+// 方式3：直接配置漏桶
+builder.Services.AddLeakyBucketRateLimiting(
+    requestsPerSecond: 10,
+    capacity: 20
+);</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        loadCurrentConfig();
+        loadAlgorithmDescriptions();
+        loadAlgorithmComparison();
+    });
+
+    async function loadCurrentConfig() {
+        try {
+            const response = await fetch('/api/Config/current');
+            const data = await response.json();
+            
+            const configHtml = `
+                <table class="table table-sm">
+                    <tr><td><strong>算法类型:</strong></td><td><span class="badge bg-primary">${data.algorithm}</span></td></tr>
+                    <tr><td><strong>每秒请求数:</strong></td><td>${data.requestsPerSecond}</td></tr>
+                    <tr><td><strong>桶容量:</strong></td><td>${data.capacity}</td></tr>
+                    <tr><td><strong>状态码:</strong></td><td>${data.statusCode}</td></tr>
+                    <tr><td><strong>响应消息:</strong></td><td>${data.message}</td></tr>
+                    <tr><td><strong>包含响应头:</strong></td><td>${data.includeHeaders ? '是' : '否'}</td></tr>
+                    <tr><td><strong>更新时间:</strong></td><td>${new Date(data.timestamp).toLocaleString()}</td></tr>
+                </table>
+            `;
+            
+            document.getElementById('currentConfig').innerHTML = configHtml;
+        } catch (error) {
+            document.getElementById('currentConfig').innerHTML = `<div class="alert alert-danger">加载配置失败: ${error.message}</div>`;
+        }
+    }
+
+    async function loadAlgorithmDescriptions() {
+        try {
+            const response = await fetch('/api/Config/algorithms');
+            const data = await response.json();
+            
+            let html = '<div class="row">';
+            
+            data.algorithms.forEach(algorithm => {
+                html += `
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-header">
+                                <h6>${algorithm.displayName} (${algorithm.name})</h6>
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text">${algorithm.description}</p>
+                                <h6>特点：</h6>
+                                <ul>
+                                    ${algorithm.characteristics.map(char => `<li>${char}</li>`).join('')}
+                                </ul>
+                                <h6>适用场景：</h6>
+                                <p class="text-muted">${algorithm.useCase}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            html += '</div>';
+            document.getElementById('algorithmDescriptions').innerHTML = html;
+        } catch (error) {
+            document.getElementById('algorithmDescriptions').innerHTML = `<div class="alert alert-danger">加载算法说明失败: ${error.message}</div>`;
+        }
+    }
+
+    async function loadAlgorithmComparison() {
+        try {
+            const response = await fetch('/api/Config/comparison');
+            const data = await response.json();
+            
+            const html = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>令牌桶算法</h6>
+                        <div class="card">
+                            <div class="card-body">
+                                <h6 class="text-success">优点：</h6>
+                                <ul>
+                                    ${data.comparison.tokenBucket.pros.map(pro => `<li>${pro}</li>`).join('')}
+                                </ul>
+                                <h6 class="text-warning">缺点：</h6>
+                                <ul>
+                                    ${data.comparison.tokenBucket.cons.map(con => `<li>${con}</li>`).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>漏桶算法</h6>
+                        <div class="card">
+                            <div class="card-body">
+                                <h6 class="text-success">优点：</h6>
+                                <ul>
+                                    ${data.comparison.leakyBucket.pros.map(pro => `<li>${pro}</li>`).join('')}
+                                </ul>
+                                <h6 class="text-warning">缺点：</h6>
+                                <ul>
+                                    ${data.comparison.leakyBucket.cons.map(con => `<li>${con}</li>`).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h6>推荐使用场景：</h6>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <strong>令牌桶：</strong> ${data.recommendations.tokenBucket}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>漏桶：</strong> ${data.recommendations.leakyBucket}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('algorithmComparison').innerHTML = html;
+        } catch (error) {
+            document.getElementById('algorithmComparison').innerHTML = `<div class="alert alert-danger">加载算法对比失败: ${error.message}</div>`;
+        }
+    }
+</script>

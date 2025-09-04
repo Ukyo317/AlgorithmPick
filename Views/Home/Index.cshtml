@@ -1,0 +1,139 @@
+﻿@{
+    ViewData["Title"] = "Home Page - 限流算法演示";
+}
+
+<div class="text-center">
+    <h1 class="display-4">限流算法演示</h1>
+    <p>这个项目展示了令牌桶和漏桶限流算法的实现</p>
+    
+    <div class="row mt-4">
+        <div class="col-md-6 offset-md-3">
+            <div class="card">
+                <div class="card-header">
+                    <h5>当前限流状态</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>客户端标识:</strong> @ViewBag.ClientKey</p>
+                    <p><strong>剩余令牌数:</strong> <span id="remainingTokens">@ViewBag.RemainingTokens</span></p>
+                    <p><strong>限流算法:</strong> 令牌桶算法</p>
+                    <p><strong>限制:</strong> 每秒10个请求，最大容量20个令牌</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>测试接口</h5>
+                </div>
+                <div class="card-body">
+                    <p>测试限流功能</p>
+                    <button class="btn btn-primary" onclick="testRateLimit()">发送请求</button>
+                    <div id="testResult" class="mt-2"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>批量测试</h5>
+                </div>
+                <div class="card-body">
+                    <p>模拟高频请求</p>
+                    <button class="btn btn-warning" onclick="simulateHighFrequency()">模拟高频请求</button>
+                    <div id="simulateResult" class="mt-2"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5>算法说明</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>令牌桶算法:</strong></p>
+                    <ul class="text-start">
+                        <li>允许突发流量</li>
+                        <li>令牌以固定速率补充</li>
+                        <li>请求消耗令牌</li>
+                    </ul>
+                    <p><strong>漏桶算法:</strong></p>
+                    <ul class="text-start">
+                        <li>平滑突发流量</li>
+                        <li>以恒定速率处理请求</li>
+                        <li>请求进入桶中排队</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function testRateLimit() {
+        const resultDiv = document.getElementById('testResult');
+        resultDiv.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"></div> 发送中...';
+        
+        try {
+            const response = await fetch('/api/RateLimitTest/test');
+            const data = await response.json();
+            
+            if (response.ok) {
+                resultDiv.innerHTML = `<div class="alert alert-success">请求成功! 时间: ${data.timestamp}</div>`;
+            } else {
+                resultDiv.innerHTML = `<div class="alert alert-danger">请求失败: ${data.message}</div>`;
+            }
+            
+            // 更新剩余令牌数
+            updateRemainingTokens();
+        } catch (error) {
+            resultDiv.innerHTML = `<div class="alert alert-danger">请求错误: ${error.message}</div>`;
+        }
+    }
+    
+    async function simulateHighFrequency() {
+        const resultDiv = document.getElementById('simulateResult');
+        resultDiv.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"></div> 模拟中...';
+        
+        try {
+            const response = await fetch('/api/RateLimitTest/simulate', { method: 'POST' });
+            const data = await response.json();
+            
+            const successCount = data.results.filter(r => r.success).length;
+            const failureCount = data.results.length - successCount;
+            
+            resultDiv.innerHTML = `
+                <div class="alert alert-info">
+                    模拟完成!<br>
+                    成功: ${successCount}<br>
+                    失败: ${failureCount}
+                </div>
+            `;
+            
+            // 更新剩余令牌数
+            updateRemainingTokens();
+        } catch (error) {
+            resultDiv.innerHTML = `<div class="alert alert-danger">模拟错误: ${error.message}</div>`;
+        }
+    }
+    
+    async function updateRemainingTokens() {
+        try {
+            const response = await fetch('/api/RateLimitTest/status');
+            const data = await response.json();
+            
+            if (data.headers.remaining) {
+                document.getElementById('remainingTokens').textContent = data.headers.remaining;
+            }
+        } catch (error) {
+            console.error('更新令牌数失败:', error);
+        }
+    }
+    
+    // 每5秒更新一次剩余令牌数
+    setInterval(updateRemainingTokens, 5000);
+</script>
